@@ -6,7 +6,6 @@ This technical challenge aims to demonstrate the software engineering skills of 
 
 export FLASK_ENV=development
 source env/bin/activate
-
 export FLASK_APP=main.py
 
 
