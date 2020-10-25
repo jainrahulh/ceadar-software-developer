@@ -5,8 +5,9 @@ This technical challenge aims to demonstrate the software engineering skills of 
 #How to RUN (CLI commands to setup)
 
 export FLASK_ENV=development
-source env/bin/activate
-export FLASK_APP=main.py
 
+source env/bin/activate
+
+export FLASK_APP=main.py
 
 flask run
