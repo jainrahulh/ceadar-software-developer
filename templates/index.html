@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+        th {
+            padding: 5px;
+            background-color: #f5f5f5;
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container" class="container">
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+          <div class="container-fluid">
+            <div class="navbar-header">
+              <a class="navbar-brand" href="#">CeADAR</a>
+            </div>
+            <p id = "saved" class="navbar-text pull-right">Saved</p>
+            <p id = "saving"  style="display:none" class="navbar-text pull-right">Saving...</p>
+          </div>
+        </nav>
+        <table id="newsTable" class="table table-bordered table-responsive table-hover">
+            <h1 class="well" >
+                Headlines
+            </h1>
+            <br/>
+            <div class="pull-right">
+                <b class="primary">SORT BY</b>
+                <select class="" id="sortBy">
+                    <option value="0">Headlines</option>
+                    <option value="1">Time</option>
+                    <option value="2">Description</option>
+                </select>
+                <button id="btnSort" class="btn btn-success" value="Click To Sort"> Click To Sort </button>
+            </div>
+            <br/>
+          <thead>
+            <tr>
+              <th>Headlines</th>
+              <th>Time</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for headline in headlines%}
+
+            {% if headline[0] == '' or headline[1] == '' or headline[2] == '' %}
+            <tr class= "danger" id = {{ headline[3] }} >
+                <td id = '0' contenteditable="true">{{ headline[0] }}</td>
+                <td id = '1' contenteditable="true">{{ headline[1] }}</td>
+                <td id = '2' contenteditable="true">{{ headline[2] }}</td>
+            </tr> {% else %}
+            <tr id = {{ headline[3] }} >
+                <td id = '0' contenteditable="true">{{ headline[0] }}</td>
+                <td id = '1' contenteditable="true">{{ headline[1] }}</td>
+                <td id = '2' contenteditable="true">{{ headline[2] }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+        <br/><br/>
+    </div>
+    <script>
+      $(document).ready(function () {
+            $('td[contenteditable=true]').on('blur',function(){
+
+
+                var content = $(this).html();
+                var id = $(this).closest('tr').attr('id')+','+$(this).attr('id');
+                //alert(id);
+                $.ajax({
+                    type:'POST',
+                    url:'/edit',
+                    data:{
+                        content: content,
+                        id:      id
+                    },
+                    beforeSend: function(){
+                        // Show image container
+                        $("#saved").fadeOut();
+                        $("#saving").fadeIn();
+                    },
+                    success:function(msg){
+                        if(!msg){
+                            alert('Failed to update. Data is not persisted.');
+                        }
+                    },
+                   complete:function(data){
+                    // Hide image container
+                    $("#saved").fadeIn();
+                    $("#saving").fadeOut();
+                   }
+                });
+            });
+
+            //Custom Sorting Function
+
+            $('#btnSort').click(function(){
+
+                content = {{ headlines | safe }};
+                alert(content);
+                $.ajax({
+                    type:'POST',
+                    url:'/sort',
+                    data:{
+                        content: JSON.stringify(content),
+                        sortBy: $('#sortBy').val()
+                    },
+                    success:function(response){
+                        if(!response){
+                            alert('Failed to sort.');
+                        }
+
+                        $("body").html(response);
+
+                        //console.log(response);
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
