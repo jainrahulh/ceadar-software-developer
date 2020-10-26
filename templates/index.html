@@ -7,6 +7,9 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
     <style>
+        body {
+            padding-top: 60px;
+        }
         th {
             padding: 5px;
             background-color: #f5f5f5;
@@ -14,35 +17,54 @@
             position: sticky;
             top: 0;
         }
+        thead, tbody {
+            display: block;
+        }
+
+
+        tbody {
+            height: 67vh;       /* Just for the demo          */
+            overflow-y: auto;    /* Trigger vertical scroll    */
+            overflow-x: hidden;  /* Hide the horizontal scroll */
+        }
+
+tr {
+    width: 100%;
+    display: table;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+td {
+    display: table-cell;
+    border: 1px solid hotpink;
+    vertical-align: middle;
+    word-wrap: break-word;
+}
+
     </style>
 </head>
 <body>
-
     <div id="container" class="container">
         <nav class="navbar navbar-inverse navbar-fixed-top">
           <div class="container-fluid">
             <div class="navbar-header">
               <a class="navbar-brand" href="#">CeADAR</a>
             </div>
-            <p id = "saved" class="navbar-text pull-right">Saved</p>
-            <p id = "saving"  style="display:none" class="navbar-text pull-right">Saving...</p>
+            <p id = "processing"  style="display:none" class="navbar-text pull-right">Processing...</p>
           </div>
         </nav>
+        <br/>
         <table id="newsTable" class="table table-bordered table-responsive table-hover">
-            <h1 class="well" >
-                Headlines
-            </h1>
-            <br/>
             <div class="pull-right">
                 <b class="primary">SORT BY</b>
-                <select class="" id="sortBy">
+                <select class="label label-primary" id="sortBy">
                     <option value="0">Headlines</option>
                     <option value="1">Time</option>
                     <option value="2">Description</option>
                 </select>
                 <button id="btnSort" class="btn btn-success" value="Click To Sort"> Click To Sort </button>
             </div>
-            <br/>
+            <br/><br/>
           <thead>
             <tr>
               <th>Headlines</th>
@@ -73,47 +95,42 @@
     <script>
       $(document).ready(function () {
             $('td[contenteditable=true]').on('blur',function(){
+                const $this = $(this);
+                if ($this.data('before') !== $this.html()) {
+                    var content = $(this).closest("tr").find('td:eq('+$(this).attr('id')+')').text()
+                    var id = $(this).closest('tr').attr('id')+','+$(this).attr('id');
 
-
-                var content = $(this).html();
-                var id = $(this).closest('tr').attr('id')+','+$(this).attr('id');
-                //alert(id);
-                $.ajax({
-                    type:'POST',
-                    url:'/edit',
-                    data:{
-                        content: content,
-                        id:      id
-                    },
-                    beforeSend: function(){
-                        // Show image container
-                        $("#saved").fadeOut();
-                        $("#saving").fadeIn();
-                    },
-                    success:function(msg){
-                        if(!msg){
-                            alert('Failed to update. Data is not persisted.');
+                    $.ajax({
+                        type:'POST',
+                        url:'/edit',
+                        data:{
+                            content: content,
+                            id:      id
+                        },
+                        success:function(msg){
+                            //alert(msg)
+                            if(msg!='success'){
+                                alert('Failed to update. Data is not persisted.');
+                            }
                         }
-                    },
-                   complete:function(data){
-                    // Hide image container
-                    $("#saved").fadeIn();
-                    $("#saving").fadeOut();
-                   }
-                });
-            });
+                    });
+               }
+            }).on('focus',function() {
+                const $this = $(this);
+                $this.data('before', $this.html());
+            })
 
             //Custom Sorting Function
 
             $('#btnSort').click(function(){
 
-                content = {{ headlines | safe }};
-                alert(content);
+                //content = {{ headlines | safe }};
+                //alert(content);
                 $.ajax({
-                    type:'POST',
+                    type:'GET',
                     url:'/sort',
                     data:{
-                        content: JSON.stringify(content),
+                        //content: JSON.stringify(content),
                         sortBy: $('#sortBy').val()
                     },
                     success:function(response){
@@ -127,6 +144,17 @@
                     }
                 });
             });
+
+
+            $(document).ajaxStart(function(){
+               $("#processing").show();
+            });
+
+            /* Gets called when request complete */
+            $(document).ajaxComplete(function(event,request,set){
+               $("#processing").delay(50).fadeOut();
+            });
+
         });
     </script>
 
